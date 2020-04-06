@@ -174,6 +174,7 @@ public class dbload {
 
             }
             System.out.println("Process final field here");
+            ++totalRecords;
             
             
             // stop timer
@@ -183,7 +184,7 @@ public class dbload {
     		long totalMilliseconds = totalNanoseconds/1000000;
 
     		System.out.println("File took "+totalMilliseconds+" milliseconds to import.");
-    		System.out.println("Program imported: X records.");
+    		System.out.println("Program imported: "+totalRecords+" records.");
     		System.out.println("Program created: X pages.");
         }
         catch (IOException ex)
