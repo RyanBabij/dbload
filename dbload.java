@@ -1,5 +1,6 @@
 import java.io.*; // file operations
 import java.util.Vector; // vectors obvs
+import java.util.concurrent.TimeUnit; //code execution timing
 
 public class dbload {
 
@@ -56,6 +57,9 @@ public class dbload {
          OutputStream fileOut = new FileOutputStream(outputFile);)
         {
         	System.out.println("Reading in file: "+file);
+        	
+        	// start timer
+        	long startTime = System.nanoTime();
         	
         	// ignore newlines. commas mean next column (nColumns is hardcoded)
         	
@@ -123,6 +127,17 @@ public class dbload {
 
             }
             System.out.println("Process final field here");
+            
+            
+            // stop timer
+    		long endTime = System.nanoTime();
+
+    		long totalNanoseconds = endTime - startTime;
+    		long totalMilliseconds = totalNanoseconds/1000000;
+
+    		System.out.println("File took "+totalMilliseconds+" milliseconds to import.");
+    		System.out.println("Program imported: X records.");
+    		System.out.println("Program created: X pages.");
         }
         catch (IOException ex)
         {
