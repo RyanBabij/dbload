@@ -1,6 +1,7 @@
 import java.io.*; // file operations
 import java.util.Vector; // vectors obvs
 import java.util.concurrent.TimeUnit; //code execution timing
+import java.nio.ByteBuffer; // convert int to bytes
 
 public class dbload {
 
@@ -103,13 +104,39 @@ public class dbload {
             		
             		if ( isNumeric )
             		{
+            			// check if 5 bytes are free on the page
+            			
             			System.out.println("Field is an integer");
             			// push integer to page, or overflow to next page.
+            			String strNumber="";
+                		for (int i:vCurrentField)
+                		{
+                			strNumber += (char)i;
+                		}
+                		ByteBuffer b = ByteBuffer.allocate(4);
+                		b.putInt(Integer.parseInt(strNumber));
+                		byte[] result = b.array();
+                		
+                		// write each of the 4 integer bytes
+                		fileOut.write(result[0]);
+                		fileOut.write(result[1]);
+                		fileOut.write(result[2]);
+                		fileOut.write(result[3]);
+              
+                		fileOut.write(',');
             		}
             		else
             		{
+            			// check if vectorsize+1 bytes are free on the page
+            			// abort if vector size+1 is greater than page size.
+            			
             			System.out.println("Field is a string");
             			// push string to page, or overflow to next page.
+                		for (int i:vCurrentField)
+                		{
+                			fileOut.write(i);
+                		}
+                		fileOut.write(',');
             		}
             		vCurrentField.clear();
             		
