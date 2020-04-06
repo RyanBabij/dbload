@@ -1,4 +1,5 @@
 import java.io.*; // file operations
+import java.util.Vector; // vectors obvs
 
 public class dbload {
 
@@ -55,6 +56,37 @@ public class dbload {
          OutputStream fileOut = new FileOutputStream(outputFile);)
         {
         	System.out.println("Reading in file: "+file);
+        	
+        	// ignore newlines. commas mean next column (nColumns is hardcoded)
+        	
+        	// create the pagefile to build
+        	//int remainingBytes = pageSize;
+        	//int aByte[pageSize];
+        	int aByte[]=new int[pageSize];
+        	int indexByte=0; // current location on page array
+        	
+        	// current field we are building to push to page.
+        	Vector<Integer> vCurrentField = new Vector<>();
+        	
+            int byteRead;
+            while ((byteRead = fileIn.read()) != -1)
+            {
+            	if (byteRead == ',')
+            	{
+            		System.out.println("STOP... COMMATIME");
+            	}
+            	else if (byteRead == '\n' || byteRead == '\r')
+            	{
+            		System.out.println("Ignoring newline... What newline?");
+            	}
+            	else
+            	{
+                	// push to vector until we find a comma. Then check if it will fit onto page.
+                	vCurrentField.add(byteRead);
+                	System.out.println("DATA");
+            	}
+
+            }
         }
         catch (IOException ex)
         {
