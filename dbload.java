@@ -1,3 +1,5 @@
+import java.io.*; // file operations
+
 public class dbload {
 
     public static void main(String[] args) {
@@ -44,6 +46,20 @@ public class dbload {
         
         // From here we should have valid args. Begin loading the file into the heap.
         
+        String outputFile = "heap."+Integer.toString(pageSize);
+        System.out.println("Output file will be: "+outputFile);
+        
+        
+        try
+        (InputStream fileIn = new FileInputStream(file);
+         OutputStream fileOut = new FileOutputStream(outputFile);)
+        {
+        	System.out.println("Reading in file: "+file);
+        }
+        catch (IOException ex)
+        {
+            ex.printStackTrace();
+        }
         
     }
 
