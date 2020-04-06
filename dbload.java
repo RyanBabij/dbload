@@ -9,6 +9,8 @@ public class dbload {
     	
     	int pageSize = 0;
     	String file = "";
+    	
+    	long totalRecords=0;
 
         System.out.println("CSV heap database loader");
         
@@ -80,64 +82,82 @@ public class dbload {
             		// determined to be either an int or a string.
             		// CSVs sometimes escape commas using "," however the given data
             		// does not seem to have these errant commas.
-            		
             		System.out.println("STOP... COMMATIME. Checking loaded field.");
-            		// process the data here, including nulls.
-            		// my binary file will use commas to delimit the data in the heap,
-            		// so if it's a string, we can just copy it as-is.
-
-            		// if the data is a number, it is 4 bytes, plus 1 byte for delimiter
-            		// if the data is a string, it is string.length()+ 1 byte for the delimiter
             		
-            		// Check if vector data is a string or ASCII number.
-            		boolean isNumeric=true;
-            		for (int i:vCurrentField)
-            		{
-            			if (i>=48 && i<=57)
-            			{}
-            			else
-            			{
-            				isNumeric=false;
-            				break;
-            			}
-            		}
+            		++totalRecords;
             		
-            		if ( isNumeric )
+            		//special case, zero-length vector. Just write a comma.
+            		// check if 1 byte is free on the page
+            		
+            		// page files must always end in a comma. Everything beyond the last comma
+            		// is null data
+            		
+            		if ( vCurrentField.size()==0)
             		{
-            			// check if 5 bytes are free on the page
-            			
-            			System.out.println("Field is an integer");
-            			// push integer to page, or overflow to next page.
-            			String strNumber="";
-                		for (int i:vCurrentField)
-                		{
-                			strNumber += (char)i;
-                		}
-                		ByteBuffer b = ByteBuffer.allocate(4);
-                		b.putInt(Integer.parseInt(strNumber));
-                		byte[] result = b.array();
-                		
-                		// write each of the 4 integer bytes
-                		fileOut.write(result[0]);
-                		fileOut.write(result[1]);
-                		fileOut.write(result[2]);
-                		fileOut.write(result[3]);
-              
-                		fileOut.write(',');
+            			fileOut.write(',');
             		}
             		else
             		{
-            			// check if vectorsize+1 bytes are free on the page
-            			// abort if vector size+1 is greater than page size.
-            			
-            			System.out.println("Field is a string");
-            			// push string to page, or overflow to next page.
+                		// process the data here, including nulls.
+                		// my binary file will use commas to delimit the data in the heap,
+                		// so if it's a string, we can just copy it as-is.
+
+                		// if the data is a number, it is 4 bytes, plus 1 byte for delimiter
+                		// if the data is a string, it is string.length()+ 1 byte for the delimiter
+                		
+                		// Check if vector data is a string or ASCII number.
+                		boolean isNumeric=true;
                 		for (int i:vCurrentField)
                 		{
-                			fileOut.write(i);
+                			if (i>=48 && i<=57)
+                			{}
+                			else
+                			{
+                				isNumeric=false;
+                				break;
+                			}
                 		}
-                		fileOut.write(',');
+                		
+                		if ( isNumeric )
+                		{
+                			// check if 5 bytes are free on the page
+                			
+                			// lots of conversions here. Would probably be faster
+                			// to just use DataStream
+                			System.out.println("Field is an integer");
+                			// push integer to page, or overflow to next page.
+                			String strNumber="";
+                    		for (int i:vCurrentField)
+                    		{
+                    			strNumber += (char)i;
+                    		}
+                    		ByteBuffer b = ByteBuffer.allocate(4);
+                    		b.putInt(Integer.parseInt(strNumber));
+                    		byte[] result = b.array();
+                    		
+                    		// write each of the 4 integer bytes
+                    		fileOut.write(result[0]);
+                    		fileOut.write(result[1]);
+                    		fileOut.write(result[2]);
+                    		fileOut.write(result[3]);
+                  
+                    		fileOut.write(',');
+                		}
+                		else
+                		{
+                			// check if vectorsize+1 bytes are free on the page
+                			// abort if vector size+1 is greater than page size.
+                			
+                			System.out.println("Field is a string");
+                			// push string to page, or overflow to next page.
+                    		for (int i:vCurrentField)
+                    		{
+                    			fileOut.write(i);
+                    		}
+                    		fileOut.write(',');
+                		}
             		}
+            		
             		vCurrentField.clear();
             		
             	}
