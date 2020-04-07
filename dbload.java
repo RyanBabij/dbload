@@ -11,6 +11,8 @@ public class dbload {
     	String file = "";
     	
     	long totalRecords=0;
+    	int currentPage=0;
+    	int currentByte=0;
 
         System.out.println("CSV heap database loader");
         
@@ -54,35 +56,33 @@ public class dbload {
         String outputFile = "heap."+Integer.toString(pageSize);
         System.out.println("Output file will be: "+outputFile);
         
-        
         try
         (InputStream fileIn = new FileInputStream(file);
          OutputStream fileOut = new FileOutputStream(outputFile);)
         {
+        	
         	System.out.println("Reading in file: "+file);
         	
         	// start timer
         	long startTime = System.nanoTime();
         	
         	// ignore newlines. commas mean next column (nColumns is hardcoded)
-        	
 
-        	int aByte[]=new int[pageSize];
-        	int indexByte=0; // current location on page array
         	
         	// current field we are building to push to page.
         	Vector<Integer> vCurrentField = new Vector<>();
         	
             int byteRead;
-            while ((byteRead = fileIn.read()) != -1)
+            while (true)
             {
-            	if (byteRead == ',')
+            	byteRead = fileIn.read(); // -1 means EOF
+            	if (byteRead == ',' || byteRead == -1 ) // delimiter or end of file
             	{
             		// comma found, which delimits the data. From here the data must be
             		// determined to be either an int or a string.
             		// CSVs sometimes escape commas using "," however the given data
             		// does not seem to have these errant commas.
-            		System.out.println("STOP... COMMATIME. Checking loaded field.");
+            		//System.out.println("STOP... COMMATIME. Checking loaded field.");
             		
             		++totalRecords;
             		
@@ -120,11 +120,29 @@ public class dbload {
                 		
                 		if ( isNumeric )
                 		{
+                			//System.out.println("Processing int");
+                			//System.out.println("Currentbyte: "+currentByte);
+                			//System.out.println("Pagesize: "+pageSize);
                 			// check if 5 bytes are free on the page
+                			
+                			//if we can't fit the data here, move to next page
+                			// and fill rest of current page with null
+                			if (currentByte+5 > pageSize)
+                			{
+                				//System.out.println("New page required");
+                				while(currentByte<pageSize)
+                				{
+                					fileOut.write(0);
+                					++currentByte;
+                				}
+                				currentByte=0;
+                				++currentPage;
+                			}
+                			// write the data
                 			
                 			// lots of conversions here. Would probably be faster
                 			// to just use DataStream
-                			System.out.println("Field is an integer");
+                			//System.out.println("Field is an integer");
                 			// push integer to page, or overflow to next page.
                 			String strNumber="";
                     		for (int i:vCurrentField)
@@ -142,40 +160,66 @@ public class dbload {
                     		fileOut.write(result[3]);
                   
                     		fileOut.write(',');
+                    		currentByte+=5;
+
                 		}
                 		else
                 		{
-                			// check if vectorsize+1 bytes are free on the page
-                			// abort if vector size+1 is greater than page size.
+                			// check if vector length+1 bytes are free on the page
+                			//System.out.println("Processing string");
+                			//System.out.println("Currentbyte: "+currentByte);
+                			//System.out.println("Pagesize: "+pageSize);
                 			
-                			System.out.println("Field is a string");
+                			//if we can't fit the data here, move to next page
+                			// and fill rest of current page with null
+                			if (currentByte+vCurrentField.size()+1 > pageSize)
+                			{
+                				//System.out.println("New page required");
+                				while(currentByte<pageSize)
+                				{
+                					fileOut.write(0);
+                					++currentByte;
+                				}
+                				currentByte=0;
+                				++currentPage;
+                			}
+                			// write the data
+
+                			//System.out.println("Field is a string, length: "+vCurrentField.size());
                 			// push string to page, or overflow to next page.
                     		for (int i:vCurrentField)
                     		{
                     			fileOut.write(i);
                     		}
                     		fileOut.write(',');
+                    		currentByte+=vCurrentField.size()+1;
                 		}
             		}
             		
             		vCurrentField.clear();
             		
+            		if ( byteRead == -1 )
+            		{
+            			System.out.println("End of file reached.");
+            			break;
+            		}
+            		
             	}
             	else if (byteRead == '\n' || byteRead == '\r')
             	{
-            		System.out.println("Ignoring newline... What newline?");
+            		//System.out.println("Ignoring newline... What newline?");
             	}
             	else
             	{
                 	// push to vector until we find a comma
                 	vCurrentField.add(byteRead);
-                	System.out.println("DATA");
+                	//System.out.println("DATA");
             	}
 
             }
-            System.out.println("Process final field here");
+
             ++totalRecords;
-            
+    		++currentPage;
             
             // stop timer
     		long endTime = System.nanoTime();
@@ -185,7 +229,7 @@ public class dbload {
 
     		System.out.println("File took "+totalMilliseconds+" milliseconds to import.");
     		System.out.println("Program imported: "+totalRecords+" records.");
-    		System.out.println("Program created: X pages.");
+    		System.out.println("Program created: "+currentPage+" pages.");
         }
         catch (IOException ex)
         {
