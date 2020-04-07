@@ -74,12 +74,14 @@ public class dbload {
         	// current field we are building to push to page.
         	Vector<Integer> vCurrentField = new Vector<>();
         	
+        	boolean quotes=false; // commas in quotes are to be considered part of the string.
+        	
             int byteRead;
             while (true)
             {
             	byteRead = fileIn.read(); // -1 means EOF
-            	
-            	if (byteRead == ',' || byteRead == 10 /* newline */ || byteRead == -1 ) // delimiter or end of file
+
+            	if ((quotes && byteRead == ',') || byteRead == 10 /* newline */ || byteRead == -1 ) // delimiter or end of file
             	{
             		// comma/newline found, which delimits the data. From here the data must be
             		// determined to be either an int or a string.
@@ -203,6 +205,10 @@ public class dbload {
             	}
             	else
             	{
+            		if (byteRead==',') // ignore commas inside quotes
+            		{
+            			quotes = !quotes;
+            		}
                 	// push to vector until we find a delimiter
                 	vCurrentField.add(byteRead);
             	}
