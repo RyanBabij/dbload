@@ -66,7 +66,9 @@ public class dbload {
         	// start timer
         	long startTime = System.nanoTime();
         	
-        	// ignore newlines. commas mean next column (nColumns is hardcoded)
+        	// comma or newlines mean next column (nColumns is hardcoded)
+        	// it seems lines are terminating with both \n and \r. I think
+        	// we can just check one of them.
 
         	
         	// current field we are building to push to page.
@@ -76,9 +78,10 @@ public class dbload {
             while (true)
             {
             	byteRead = fileIn.read(); // -1 means EOF
-            	if (byteRead == ',' || byteRead == -1 ) // delimiter or end of file
+            	
+            	if (byteRead == ',' || byteRead == 10 /* newline */ || byteRead == -1 ) // delimiter or end of file
             	{
-            		// comma found, which delimits the data. From here the data must be
+            		// comma/newline found, which delimits the data. From here the data must be
             		// determined to be either an int or a string.
             		// CSVs sometimes escape commas using "," however the given data
             		// does not seem to have these errant commas.
@@ -194,13 +197,13 @@ public class dbload {
             		}
             		
             	}
-            	else if (byteRead == '\n' || byteRead == '\r')
+            	else if (byteRead == 13 ) // some editors insert this into documents. Ignore.
             	{
-            		//ignore newlines
+            	
             	}
             	else
             	{
-                	// push to vector until we find a comma
+                	// push to vector until we find a delimiter
                 	vCurrentField.add(byteRead);
             	}
 
