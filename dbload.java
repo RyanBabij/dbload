@@ -81,14 +81,25 @@ public class dbload {
             {
             	byteRead = fileIn.read(); // -1 means EOF
 
-            	if ((quotes && byteRead == ',') || byteRead == 10 /* newline */ || byteRead == -1 ) // delimiter or end of file
+            	if ((quotes==false && byteRead == ',') || byteRead == '\n' /* newline */ || byteRead == -1 ) // delimiter or end of file
             	{
             		// comma/newline found, which delimits the data. From here the data must be
             		// determined to be either an int or a string.
             		// CSVs sometimes escape commas using "," however the given data
             		// does not seem to have these errant commas.
             		
-            		++totalRecords;
+            		// it seems that there may be some short entries in the CSV. Therefore I must
+            		// use newlines to mark new records.
+            		
+            		char delimiter = ',';
+            		if (byteRead==10)
+            		{
+            			delimiter='\n';
+            			quotes=false; // reset quote flag
+            			++totalRecords;
+            		}
+            		
+
             		
             		//special case, zero-length vector. Just write a comma.
             		// check if 1 byte is free on the page
@@ -98,7 +109,7 @@ public class dbload {
             		
             		if ( vCurrentField.size()==0)
             		{
-            			fileOut.write(',');
+            			fileOut.write(delimiter);
             		}
             		else
             		{
@@ -158,7 +169,7 @@ public class dbload {
                     		fileOut.write(result[2]);
                     		fileOut.write(result[3]);
                   
-                    		fileOut.write(',');
+                    		fileOut.write(delimiter);
                     		currentByte+=5;
 
                 		}
@@ -185,7 +196,7 @@ public class dbload {
                     		{
                     			fileOut.write(i);
                     		}
-                    		fileOut.write(',');
+                    		fileOut.write(delimiter);
                     		currentByte+=vCurrentField.size()+1;
                 		}
             		}
@@ -205,7 +216,7 @@ public class dbload {
             	}
             	else
             	{
-            		if (byteRead==',') // ignore commas inside quotes
+            		if (byteRead=='"') // ignore commas inside quotes
             		{
             			quotes = !quotes;
             		}
