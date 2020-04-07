@@ -82,7 +82,6 @@ public class dbload {
             		// determined to be either an int or a string.
             		// CSVs sometimes escape commas using "," however the given data
             		// does not seem to have these errant commas.
-            		//System.out.println("STOP... COMMATIME. Checking loaded field.");
             		
             		++totalRecords;
             		
@@ -120,16 +119,12 @@ public class dbload {
                 		
                 		if ( isNumeric )
                 		{
-                			//System.out.println("Processing int");
-                			//System.out.println("Currentbyte: "+currentByte);
-                			//System.out.println("Pagesize: "+pageSize);
                 			// check if 5 bytes are free on the page
                 			
                 			//if we can't fit the data here, move to next page
                 			// and fill rest of current page with null
                 			if (currentByte+5 > pageSize)
                 			{
-                				//System.out.println("New page required");
                 				while(currentByte<pageSize)
                 				{
                 					fileOut.write(0);
@@ -142,7 +137,6 @@ public class dbload {
                 			
                 			// lots of conversions here. Would probably be faster
                 			// to just use DataStream
-                			//System.out.println("Field is an integer");
                 			// push integer to page, or overflow to next page.
                 			String strNumber="";
                     		for (int i:vCurrentField)
@@ -166,15 +160,11 @@ public class dbload {
                 		else
                 		{
                 			// check if vector length+1 bytes are free on the page
-                			//System.out.println("Processing string");
-                			//System.out.println("Currentbyte: "+currentByte);
-                			//System.out.println("Pagesize: "+pageSize);
                 			
                 			//if we can't fit the data here, move to next page
                 			// and fill rest of current page with null
                 			if (currentByte+vCurrentField.size()+1 > pageSize)
                 			{
-                				//System.out.println("New page required");
                 				while(currentByte<pageSize)
                 				{
                 					fileOut.write(0);
@@ -185,7 +175,6 @@ public class dbload {
                 			}
                 			// write the data
 
-                			//System.out.println("Field is a string, length: "+vCurrentField.size());
                 			// push string to page, or overflow to next page.
                     		for (int i:vCurrentField)
                     		{
@@ -207,13 +196,12 @@ public class dbload {
             	}
             	else if (byteRead == '\n' || byteRead == '\r')
             	{
-            		//System.out.println("Ignoring newline... What newline?");
+            		//ignore newlines
             	}
             	else
             	{
                 	// push to vector until we find a comma
                 	vCurrentField.add(byteRead);
-                	//System.out.println("DATA");
             	}
 
             }
